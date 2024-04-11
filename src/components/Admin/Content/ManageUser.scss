@@ -1,0 +1,52 @@
+.manage-user-container
+{
+    padding: 10px;
+    .title
+    {
+        font-weight: 600;
+        font-size: 20px;
+    }
+    .user-content
+    {
+        .btn-add-new
+        {   
+            margin: 10px 0;
+        }
+        .table-users-container
+        {
+
+        }
+    }
+}
+
+.modal-add-user{
+    .img-preview
+    {
+        height: 150px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border: 1px dashed #ccc;
+        img 
+        {
+            max-width: 100%;
+            max-height: 100%;
+        }
+    }
+    .label-upload
+    {
+        cursor: pointer;
+        display: flex;
+        gap: 3px ;
+        align-items: center;
+        width: fit-content;
+        padding: 3px 10px;
+        border-radius: 5px;
+        background-color: #eeeeee;
+        border: none;
+        &:hover
+        {
+            background-color: #dcdcdc;
+        }
+    }
+}
