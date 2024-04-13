@@ -1,17 +1,30 @@
-import React, { useState, ChangeEvent, KeyboardEventHandler } from 'react';
+import React, { useState, ChangeEvent, useEffect, KeyboardEventHandler } from 'react';
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
 import { FcPlus } from 'react-icons/fc';
 import { toast, Slide } from 'react-toastify';
-import { postCreateNewUser } from "../../../services/apiServices";
+import { postUpdateUser } from "../../../services/apiServices";
+import _ from "lodash";
+
+interface DataUpdate {
+  id:string;
+  email:string;
+  username:string;
+  role:string;
+  image:string|File;
+  previewImage:string;
+}
 
 interface ModalCreateUserProps {
   show: boolean;
   setShow: (show: boolean) => void;
   fetchData: () => Promise<void>
+  dataUpdate: DataUpdate;
+  resetUpdateData: () => void;
 }
 
-const ModalCreateUser: React.FC<ModalCreateUserProps> = ({ show, setShow, fetchData }) => {
+
+const ModalUpdateUser: React.FC<ModalCreateUserProps> = ({ show, setShow, fetchData, dataUpdate, resetUpdateData }) => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [username, setUsername] = useState<string>("");
@@ -19,14 +32,30 @@ const ModalCreateUser: React.FC<ModalCreateUserProps> = ({ show, setShow, fetchD
   const [image, setImage] = useState<string | File>("");
   const [previewImage, setPreviewImage] = useState<string>("");
 
+  useEffect(() => {
+    if(!_.isEmpty(dataUpdate)) 
+    {
+      setEmail(dataUpdate.email);
+      setUsername(dataUpdate.username);
+      setRole(dataUpdate.role);
+      setImage("");
+      if(dataUpdate.image)
+      {
+        setPreviewImage(`data:image/jpeg;base64,${dataUpdate.image}`);
+      }
+      console.log(dataUpdate)
+    }
+  },[dataUpdate])
+
   const handleClose = () => {
     setShow(false);
     setEmail("");
     setPassword("");
     setUsername("");
-    setRole("USER");
+    setRole(dataUpdate.role);
     setImage("");
     setPreviewImage("");
+    resetUpdateData();
   };
 
   const validateEmail = (email: string): boolean => {
@@ -37,15 +66,10 @@ const ModalCreateUser: React.FC<ModalCreateUserProps> = ({ show, setShow, fetchD
       ) !== null;
   };
 
-  const validatePassword = (password: string): boolean => {
-    const re = /^(?=.*\d)(?=.*[!@#$%^&*])(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
-    return re.test(password);
-  };
-
-  const handleSubmitCreateUser = async (): Promise<void> => {
+  const handleSubmitUpdateUser = async (): Promise<void> => {
     // validate email
     const isValidateEmail: boolean = validateEmail(email);
-    if (!isValidateEmail) {
+    if (!isValidateEmail ) {
       toast.error("invalid email", {
         position: "top-center",
         autoClose: 5000,
@@ -60,24 +84,7 @@ const ModalCreateUser: React.FC<ModalCreateUserProps> = ({ show, setShow, fetchD
       return;
     }
 
-    // validate password
-    const isValidatePassword: boolean = validatePassword(password);
-    if (!isValidatePassword) {
-      toast.error("Invalid password", {
-        position: "top-center",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "light",
-        transition: Slide
-      });
-      return;
-    }
-
-    const data = await postCreateNewUser(email, password, username, role, image) as any;
+    const data = await postUpdateUser(dataUpdate.id, username, role, image) as any;
     console.log("component res: ", data);
     if (data && data && data.EC === 0) {
       toast.success(data.EM, {
@@ -110,11 +117,11 @@ const ModalCreateUser: React.FC<ModalCreateUserProps> = ({ show, setShow, fetchD
     }
   };
 
-  const handleSubmitCreateUserEnter:KeyboardEventHandler<HTMLButtonElement> = (event) => {
+  const handleSubmitUpdateUserEnter:KeyboardEventHandler<HTMLButtonElement> = (event) => {
     console.log(event)
     if (event.key === "Enter") {
       event.preventDefault();
-      handleSubmitCreateUser();
+      handleSubmitUpdateUser();
     }
   };
 
@@ -136,10 +143,10 @@ const ModalCreateUser: React.FC<ModalCreateUserProps> = ({ show, setShow, fetchD
         centered
         backdrop="static"
         className='modal-add-user'
-        onKeyDown={handleSubmitCreateUserEnter}
+        onKeyDown={handleSubmitUpdateUserEnter}
       >
         <Modal.Header closeButton>
-          <Modal.Title>Add User</Modal.Title>
+          <Modal.Title>Edit User</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <form className="row g-3">
@@ -154,6 +161,7 @@ const ModalCreateUser: React.FC<ModalCreateUserProps> = ({ show, setShow, fetchD
                 placeholder='Email'
                 onChange={(event) => setEmail(event.target.value)}
                 value={email}
+                disabled
               />
             </div>
             <div className="col-md-11">
@@ -167,6 +175,7 @@ const ModalCreateUser: React.FC<ModalCreateUserProps> = ({ show, setShow, fetchD
                 placeholder="Password"
                 onChange={(event) => setPassword(event.target.value)}
                 value={password}
+                disabled
               />
             </div>
             <div className="col-md-6">
@@ -186,7 +195,7 @@ const ModalCreateUser: React.FC<ModalCreateUserProps> = ({ show, setShow, fetchD
               <label htmlFor="inputRole" className="form-label">
                 Role
               </label>
-              <select id="inputRole" className="form-select" onChange={(event) => setRole(event.target.value)}>
+              <select id="inputRole" className="form-select" onChange={(event) => setRole(event.target.value)} >
                 <option value="USER">USER</option>
                 <option value="ADMIN">ADMIN</option>
               </select>
@@ -211,7 +220,7 @@ const ModalCreateUser: React.FC<ModalCreateUserProps> = ({ show, setShow, fetchD
           <Button variant="secondary" onClick={handleClose}>
             Close
           </Button>
-          <Button variant="primary" onClick={() => handleSubmitCreateUser()}  onKeyDown={handleSubmitCreateUserEnter}>
+          <Button variant="primary" onClick={() => handleSubmitUpdateUser()}>
             Save Changes
           </Button>
         </Modal.Footer>
@@ -220,4 +229,4 @@ const ModalCreateUser: React.FC<ModalCreateUserProps> = ({ show, setShow, fetchD
   );
 };
 
-export default ModalCreateUser;
+export default ModalUpdateUser;
